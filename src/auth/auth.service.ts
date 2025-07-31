@@ -1,4 +1,4 @@
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { UserService } from '../user/user.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
@@ -13,11 +13,14 @@ export class AuthService {
 
   async validateUser(email: string, pass: string): Promise<any> {
     const user = await this.userService.findOneByEmail(email);
-    if (user && (await bcrypt.compare(pass, user.password))) {
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    if (await bcrypt.compare(pass, user.password)) {
       const { password, ...result } = user;
       return result;
     }
-    return null;
+    throw new UnauthorizedException('Invalid credentials');
   }
 
   async login(user: any) {
