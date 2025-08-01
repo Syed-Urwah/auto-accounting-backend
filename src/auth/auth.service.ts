@@ -3,12 +3,16 @@ import { UserService } from '../user/user.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { apiResponse } from '../common/helpers/response.helper';
+import { SignUpDto } from './dto/signup.dto';
+import { CompanyService } from '../company/company.service';
+import { CreateCompanyDto } from '../company/dto/create-company.dto';
 
 @Injectable()
 export class AuthService {
   constructor(
     private userService: UserService,
     private jwtService: JwtService,
+    private companyService: CompanyService,
   ) {}
 
   async validateUser(email: string, pass: string): Promise<any> {
@@ -29,9 +33,21 @@ export class AuthService {
     return apiResponse(HttpStatus.OK, 'Login successful', { access_token: token });
   }
 
-  async signup(email: string, username: string, pass: string) {
-    const newUser = await this.userService.create(email,username, pass);
-    const { password, ...result } = newUser;
+  async signup(signUpDto: SignUpDto) {
+    const newUser = await this.userService.create(signUpDto.email, signUpDto.username, signUpDto.password);
+    const createCompanyDto: CreateCompanyDto = { name: signUpDto.companyName, address: signUpDto.companyAddress };
+    const company = await this.companyService.create(createCompanyDto, newUser);
+    newUser.company = company;
+    await newUser.save();
+    const { password, ...userResult } = newUser;
+    const result = {
+      ...userResult,
+      company: {
+        id: company.id,
+        name: company.name,
+        address: company.address,
+      },
+    };
     return apiResponse(HttpStatus.CREATED, 'Signup successful', result);
   }
 }

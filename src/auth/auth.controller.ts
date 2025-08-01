@@ -3,6 +3,7 @@ import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './local-auth.guard';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { Response } from 'express';
+import { SignUpDto } from './dto/signup.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -16,8 +17,8 @@ export class AuthController {
   }
 
   @Post('signup')
-  async signup(@Body() body, @Res() res: Response) {
-    const result = await this.authService.signup(body.email, body.username, body.password);
+  async signup(@Body() signUpDto: SignUpDto, @Res() res: Response) {
+    const result = await this.authService.signup(signUpDto);
     return res.status(result.statusCode).json(result);
   }
 

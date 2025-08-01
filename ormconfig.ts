@@ -1,5 +1,6 @@
 import { DataSource } from 'typeorm';
 import { User } from './src/user/user.entity';
+import { Company } from './src/company/entities/company.entity';
 
 const AppDataSource = new DataSource({
   type: 'postgres',
@@ -8,7 +9,7 @@ const AppDataSource = new DataSource({
   username: 'postgres',
   password: 'postgres',
   database: 'auto-accounting',
-  entities: [User],
+  entities: [User, Company],
   migrations: [__dirname + '/migrations/**/*.ts'],
 });
 

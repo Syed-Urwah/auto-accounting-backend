@@ -1,5 +1,12 @@
-import { Entity, Column, PrimaryGeneratedColumn, BaseEntity } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  BaseEntity,
+  ManyToOne,
+} from 'typeorm';
 import { Role } from '../auth/roles.enum';
+import { Company } from '../company/entities/company.entity';
 
 @Entity('users')
 export class User extends BaseEntity {
@@ -21,4 +28,7 @@ export class User extends BaseEntity {
     default: [Role.USER],
   })
   roles: Role[];
+
+  @ManyToOne(() => Company, (company) => company.users)
+  company: Company;
 }
