@@ -6,6 +6,7 @@ import { apiResponse } from '../common/helpers/response.helper';
 import { SignUpDto } from './dto/signup.dto';
 import { CompanyService } from '../company/company.service';
 import { CreateCompanyDto } from '../company/dto/create-company.dto';
+import { Transactional } from 'typeorm-transactional';
 
 @Injectable()
 export class AuthService {
@@ -33,6 +34,7 @@ export class AuthService {
     return apiResponse(HttpStatus.OK, 'Login successful', { access_token: token });
   }
 
+  @Transactional()
   async signup(signUpDto: SignUpDto) {
     const newUser = await this.userService.create(signUpDto.email, signUpDto.username, signUpDto.password);
     const createCompanyDto: CreateCompanyDto = { name: signUpDto.companyName, address: signUpDto.companyAddress };
@@ -51,3 +53,4 @@ export class AuthService {
     return apiResponse(HttpStatus.CREATED, 'Signup successful', result);
   }
 }
+
