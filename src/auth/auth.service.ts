@@ -29,9 +29,10 @@ export class AuthService {
   }
 
   async login(user: any) {
-    const payload = {email: user.email, username: user.username, sub: user.id, roles: user.roles};
-    const token = this.jwtService.sign(payload);
-    return apiResponse(HttpStatus.OK, 'Login successful', { access_token: token });
+    console.log('User logging in:', user);
+    // const payload = {email: user.email, username: user.username, sub: user.id, roles: user.roles, companyId: user.company.id};
+    const token = this.jwtService.sign(user);
+    return apiResponse(HttpStatus.OK, 'Login successful', { user: user, access_token: token });
   }
 
   @Transactional()
