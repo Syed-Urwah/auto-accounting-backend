@@ -1,13 +1,14 @@
 import { Module } from '@nestjs/common';
-import { GeneralJournalService } from './general-journal.service';
-import { GeneralJournalController } from './general-journal.controller';
+import { BalanceSheetController } from './balance-sheet.controller';
+import { BalanceSheetService } from './balance-sheet.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { JournalEntry } from 'src/accounting/entities/journal-entry.entity';
 import { ChartOfAccount } from 'src/accounting/entities/chart-of-account.entity';
 
 @Module({
   imports: [TypeOrmModule.forFeature([JournalEntry, ChartOfAccount])],
-  controllers: [GeneralJournalController],
-  providers: [GeneralJournalService],
+  controllers: [BalanceSheetController],
+  providers: [BalanceSheetService],
 })
-export class GeneralJournalModule {}
+export class BalanceSheetModule {}
+

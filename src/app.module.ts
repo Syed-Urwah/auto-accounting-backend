@@ -10,13 +10,13 @@ import { OcrModule } from './ocr/ocr.module';
 import { GeneralJournalModule } from './accounting/general-journal/general-journal.module';
 import { GeneralJournalController } from './accounting/general-journal/general-journal.controller';
 import { GeneralJournalService } from './accounting/general-journal/general-journal.service';
-import { GeneralLedgerModule } from './accounting/general-ledger/general-ledger.module';
-import { IncomeStatementModule } from './accounting/income-statement/income-statement.module';
-import { BalanceSheetModule } from './accounting/balance-sheet/balance-sheet.module';
-import { TrialBalanceModule } from './accounting/trial-balance/trial-balance.module';
-import { AccountPayableModule } from './accounting/account-payable/account-payable.module';
-import { AccountReceivableModule } from './accounting/account-receivable/account-receivable.module';
-import { CashFlowStatementModule } from './accounting/cash-flow-statement/cash-flow-statement.module';
+import { GeneralLedgerModule } from './accounting/reports/general-ledger/general-ledger.module';
+import { IncomeStatementModule } from './accounting/reports/income-statement/income-statement.module';
+import { BalanceSheetModule } from './accounting/reports/balance-sheet/balance-sheet.module';
+import { TrialBalanceModule } from './accounting/reports/trial-balance/trial-balance.module';
+import { AccountPayableModule } from './accounting/reports/account-payable/account-payable.module';
+import { AccountReceivableModule } from './accounting/reports/account-receivable/account-receivable.module';
+import { CashFlowStatementModule } from './accounting/reports/cash-flow-statement/cash-flow-statement.module';
 
 @Module({
   imports: [
@@ -47,7 +47,7 @@ import { CashFlowStatementModule } from './accounting/cash-flow-statement/cash-f
     AccountReceivableModule,
     CashFlowStatementModule,
   ],
-  controllers: [AppController, GeneralJournalController],
-  providers: [AppService, GeneralJournalService],
+  controllers: [AppController],
+  providers: [AppService],
 })
 export class AppModule {}
