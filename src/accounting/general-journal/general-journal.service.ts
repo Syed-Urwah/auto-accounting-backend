@@ -5,6 +5,8 @@ import { JournalEntry } from 'src/accounting/entities/journal-entry.entity';
 import { ChartOfAccount } from 'src/accounting/entities/chart-of-account.entity';
 import { Repository } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
+import axios from 'axios';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class GeneralJournalService {
@@ -13,105 +15,97 @@ export class GeneralJournalService {
     private readonly journalEntryRepository: Repository<JournalEntry>,
     @InjectRepository(ChartOfAccount)
     private readonly chartOfAccountRepository: Repository<ChartOfAccount>,
+    private readonly configService: ConfigService,
   ) {}
 
   async create(createGeneralJournalDto: CreateGeneralJournalDto) {
     const { text } = createGeneralJournalDto;
-    const transactionId = uuidv4();
-    const date = new Date().toISOString().split('T')[0]; // Current date
 
-    // --- SIMULATED NLP/LLM PROCESSING ---
-    // In a real application, an LLM would parse 'text' and return structured data.
-    // For this example, we'll use simple keyword matching to create a journal entry.
+    const chartOfAccounts = await this.chartOfAccountRepository.find();
 
-    let entriesToCreate = [];
-    let totalDebit = 0;
-    let totalCredit = 0;
+    const prompt = `
+    You are an expert accounting assistant. Convert the user's request into a structured double-entry journal entry based on the provided Chart of Accounts. The total debits must equal the total credits.
 
-    // Example 1: Received cash for services
-    if (text.toLowerCase().includes('received') && text.toLowerCase().includes('cash') && text.toLowerCase().includes('services')) {
-      const amountMatch = text.match(/\$(\d+,?\d*\.?\d*)/);
-      const amount = amountMatch ? parseFloat(amountMatch[1].replace(/,/g, '')) : 0;
+    User Request: "${text}"
 
-      if (amount > 0) {
-        const cashAccount = await this.chartOfAccountRepository.findOne({ where: { accountName: 'Cash' } });
-        const serviceRevenueAccount = await this.chartOfAccountRepository.findOne({ where: { accountName: 'Service Revenue' } });
+    Chart of Accounts:
+    ${chartOfAccounts.map((acc) => `- ${acc.accountNumber} ${acc.accountName}`).join('\n')}
 
-        if (!cashAccount || !serviceRevenueAccount) {
-          throw new BadRequestException('Required accounts (Cash or Service Revenue) not found in Chart of Accounts.');
+    Return a JSON object in the following format:
+    {
+      "start_date": "YYYY-MM-DD",
+      "description": "A brief summary of the transaction",
+      "entries": [
+        { "date": "YYYY-MM-DD", "accountName": "Account1", "debit": X, "credit": 0 , "description": "A Short Description of transaction"},
+        { "date": "YYYY-MM-DD", "accountName": "Account2", "debit": 0, "credit": Y , "description": "A Short Description of transaction"}
+      ]
+    }
+    `;
+
+    const apiKey = this.configService.get('OPENROUTER_API_KEY');
+    if (!apiKey || apiKey === 'YOUR_OPENROUTER_API_KEY') {
+      throw new BadRequestException('OpenRouter API key is not set. Please set it in the .env file.');
+    }
+
+    try {
+      const response = await axios.post(
+        'https://openrouter.ai/api/v1/chat/completions',
+        {
+          model: 'deepseek/deepseek-chat-v3.1:free',
+          messages: [{ role: 'user', content: prompt }],
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${apiKey}`,
+          },
+        },
+      );
+      let result = response.data.choices[0].message.content;
+      result = result.replace(/```json\n?/, '').replace(/```$/, '');
+      const parsedResult = JSON.parse(result);
+
+      const { description, entries } = parsedResult;
+      const transactionId = uuidv4();
+
+      let totalDebit = 0;
+      let totalCredit = 0;
+      const entriesToCreate = [];
+
+      for (const entry of entries) {
+        const account = await this.chartOfAccountRepository.findOne({ where: { accountName: entry.accountName } });
+        if (!account) {
+          throw new BadRequestException(`Account '${entry.accountName}' not found in Chart of Accounts.`);
         }
 
         entriesToCreate.push({
           transactionId,
-          date,
-          account: cashAccount,
-          debit: amount,
-          credit: 0,
-          description: text,
+          date: entry.date,
+          account,
+          debit: entry.debit,
+          credit: entry.credit,
+          description: entry.description,
         });
-        entriesToCreate.push({
-          transactionId,
-          date,
-          account: serviceRevenueAccount,
-          debit: 0,
-          credit: amount,
-          description: text,
-        });
-        totalDebit += amount;
-        totalCredit += amount;
+
+        totalDebit += entry.debit;
+        totalCredit += entry.credit;
       }
-    }
-    // Example 2: Paid for office supplies
-    else if (text.toLowerCase().includes('paid') && text.toLowerCase().includes('office supplies')) {
-      const amountMatch = text.match(/\$(\d+,?\d*\.?\d*)/);
-      const amount = amountMatch ? parseFloat(amountMatch[1].replace(/,/g, '')) : 0;
 
-      if (amount > 0) {
-        const cashAccount = await this.chartOfAccountRepository.findOne({ where: { accountName: 'Cash' } });
-        const officeSuppliesExpenseAccount = await this.chartOfAccountRepository.findOne({ where: { accountName: 'Office Supplies Expense' } });
-
-        if (!cashAccount || !officeSuppliesExpenseAccount) {
-          throw new BadRequestException('Required accounts (Cash or Office Supplies Expense) not found in Chart of Accounts.');
-        }
-
-        entriesToCreate.push({
-          transactionId,
-          date,
-          account: officeSuppliesExpenseAccount,
-          debit: amount,
-          credit: 0,
-          description: text,
-        });
-        entriesToCreate.push({
-          transactionId,
-          date,
-          account: cashAccount,
-          debit: 0,
-          credit: amount,
-          description: text,
-        });
-        totalDebit += amount;
-        totalCredit += amount;
+      if (Math.abs(totalDebit - totalCredit) > 0.01) { // Using a tolerance for floating point comparison
+        throw new BadRequestException('Journal entry is not balanced: Debits do not equal Credits.');
       }
+
+      const savedEntries = await this.journalEntryRepository.save(entriesToCreate);
+
+      return {
+        message: 'Journal entry created successfully.',
+        transactionId,
+        description,
+        entries: savedEntries,
+      };
+    } catch (error) {
+      console.error('Error calling OpenRouter API:', error);
+      throw new BadRequestException('Failed to get response from OpenRouter API.');
     }
-    // Add more parsing logic for other transaction types here
-
-    if (entriesToCreate.length === 0) {
-      throw new BadRequestException('Could not parse the transaction from the provided text.');
-    }
-
-    // --- VALIDATION ---
-    if (totalDebit !== totalCredit) {
-      throw new BadRequestException('Journal entry is not balanced: Debits do not equal Credits.');
-    }
-
-    // Save entries
-    const savedEntries = await this.journalEntryRepository.save(entriesToCreate);
-
-    return {
-      message: 'Journal entry created successfully.',
-      transactionId,
-      entries: savedEntries,
-    };
+    
   }
 }

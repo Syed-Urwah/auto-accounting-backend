@@ -4,9 +4,10 @@ import { GeneralJournalController } from './general-journal.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { JournalEntry } from 'src/accounting/entities/journal-entry.entity';
 import { ChartOfAccount } from 'src/accounting/entities/chart-of-account.entity';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([JournalEntry, ChartOfAccount])],
+  imports: [TypeOrmModule.forFeature([JournalEntry, ChartOfAccount]), ConfigModule],
   controllers: [GeneralJournalController],
   providers: [GeneralJournalService],
 })
