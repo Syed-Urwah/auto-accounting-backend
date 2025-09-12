@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, HttpStatus } from '@nestjs/common';
 import { CreateGeneralJournalDto } from './dto/create-general-journal.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { JournalEntry } from 'src/accounting/entities/journal-entry.entity';
@@ -7,6 +7,7 @@ import { Repository } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 import axios from 'axios';
 import { ConfigService } from '@nestjs/config';
+import { apiResponse } from 'src/common/helpers/response.helper';
 
 @Injectable()
 export class GeneralJournalService {
@@ -96,12 +97,14 @@ export class GeneralJournalService {
 
       const savedEntries = await this.journalEntryRepository.save(entriesToCreate);
 
-      return {
+      const json = {
         message: 'Journal entry created successfully.',
         transactionId,
         description,
         entries: savedEntries,
       };
+
+      return apiResponse(HttpStatus.OK, 'Journal entry created successfully', json)
     } catch (error) {
       console.error('Error calling OpenRouter API:', error);
       throw new BadRequestException('Failed to get response from OpenRouter API.');
