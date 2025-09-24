@@ -73,6 +73,11 @@ export class AccountingTables1757507751729 implements MigrationInterface {
                         name: "accountId",
                         type: "int",
                     },
+                    {
+                        name: "companyId",
+                        type: "int",
+                        isNullable: true,
+                    },
                 ],
             }),
             true,
@@ -88,14 +93,35 @@ export class AccountingTables1757507751729 implements MigrationInterface {
                 onUpdate: "NO ACTION",
             }),
         );
+
+        await queryRunner.createForeignKey(
+            "journal_entry",
+            new TableForeignKey({
+                columnNames: ["companyId"],
+                referencedColumnNames: ["id"],
+                referencedTableName: "companies",
+                onDelete: "NO ACTION",
+                onUpdate: "NO ACTION",
+            }),
+        );
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        const table = await queryRunner.getTable("journal_entry");
-        const foreignKey = table.foreignKeys.find(
+        const journalEntryTable = await queryRunner.getTable("journal_entry");
+
+        const accountForeignKey = journalEntryTable.foreignKeys.find(
             (fk) => fk.columnNames.indexOf("accountId") !== -1,
         );
-        await queryRunner.dropForeignKey("journal_entry", foreignKey);
+        await queryRunner.dropForeignKey("journal_entry", accountForeignKey);
+
+        const companyForeignKey = journalEntryTable.foreignKeys.find(
+            (fk) => fk.columnNames.indexOf("companyId") !== -1,
+        );
+        if (companyForeignKey) {
+            await queryRunner.dropForeignKey("journal_entry", companyForeignKey);
+        }
+
+        await queryRunner.dropColumn("journal_entry", "companyId");
         await queryRunner.dropTable("journal_entry");
         await queryRunner.dropTable("chart_of_account");
     }

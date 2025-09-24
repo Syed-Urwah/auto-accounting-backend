@@ -1,4 +1,4 @@
-import { Controller, Post, Body } from '@nestjs/common';
+import { Controller, Post, Body, Get, Query } from '@nestjs/common';
 import { GeneralJournalService } from './general-journal.service';
 import { CreateGeneralJournalDto } from './dto/create-general-journal.dto';
 
@@ -9,5 +9,10 @@ export class GeneralJournalController {
   @Post()
   create(@Body() createGeneralJournalDto: CreateGeneralJournalDto) {
     return this.generalJournalService.create(createGeneralJournalDto);
+  }
+
+  @Get('/by-transaction')
+  getJournalEntriesByTransactionId(@Query('companyId') companyId: number) {
+    return this.generalJournalService.getJournalEntriesByTransactionId(companyId);
   }
 }

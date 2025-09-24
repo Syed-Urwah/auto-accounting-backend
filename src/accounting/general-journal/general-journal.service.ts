@@ -8,6 +8,7 @@ import { v4 as uuidv4 } from 'uuid';
 import axios from 'axios';
 import { ConfigService } from '@nestjs/config';
 import { apiResponse } from 'src/common/helpers/response.helper';
+import { Company } from 'src/company/entities/company.entity';
 
 @Injectable()
 export class GeneralJournalService {
@@ -16,11 +17,18 @@ export class GeneralJournalService {
     private readonly journalEntryRepository: Repository<JournalEntry>,
     @InjectRepository(ChartOfAccount)
     private readonly chartOfAccountRepository: Repository<ChartOfAccount>,
+    @InjectRepository(Company)
+    private readonly companyRepository: Repository<Company>,
     private readonly configService: ConfigService,
   ) {}
 
   async create(createGeneralJournalDto: CreateGeneralJournalDto) {
-    const { text } = createGeneralJournalDto;
+    const { text, company_id } = createGeneralJournalDto;
+
+    const company = await this.companyRepository.findOne({ where: { id: company_id } });
+    if (!company) {
+      throw new BadRequestException('Company not found.');
+    }
 
     const chartOfAccounts = await this.chartOfAccountRepository.find();
 
@@ -85,6 +93,7 @@ export class GeneralJournalService {
           debit: entry.debit,
           credit: entry.credit,
           description: entry.description,
+          company,
         });
 
         totalDebit += entry.debit;
@@ -109,6 +118,23 @@ export class GeneralJournalService {
       console.error('Error calling OpenRouter API:', error);
       throw new BadRequestException('Failed to get response from OpenRouter API.');
     }
-    
+  }
+
+  async getJournalEntriesByTransactionId(companyId: number) {
+    const journalEntries = await this.journalEntryRepository.find({
+      where: { company: { id: companyId } },
+      relations: ['account', 'company'],
+    });
+
+    const groupedEntries = journalEntries.reduce((acc, entry) => {
+      const transactionId = entry.transactionId;
+      if (!acc[transactionId]) {
+        acc[transactionId] = { transactionId, entries: [] };
+      }
+      acc[transactionId].entries.push(entry);
+      return acc;
+    }, {});
+
+    return Object.values(groupedEntries);
   }
 }

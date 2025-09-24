@@ -1,10 +1,14 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
 import { ChartOfAccount } from './chart-of-account.entity';
+import { Company } from 'src/company/entities/company.entity';
 
 @Entity()
 export class JournalEntry {
   @PrimaryGeneratedColumn()
   id: number;
+
+  @ManyToOne(() => Company)
+  company: Company;
 
   @Column()
   transactionId: string;
