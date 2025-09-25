@@ -3,6 +3,7 @@ import { User } from './src/user/user.entity';
 import { Company } from './src/company/entities/company.entity';
 import { ChartOfAccount } from './src/accounting/entities/chart-of-account.entity';
 import { JournalEntry } from './src/accounting/entities/journal-entry.entity';
+import { GeneralJournal } from './src/accounting/general-journal/entities/general-journal.entity';
 
 const options: DataSourceOptions = {
   type: 'postgres',
@@ -11,7 +12,7 @@ const options: DataSourceOptions = {
   username: 'postgres',
   password: 'postgres',
   database: 'auto-accounting',
-  entities: [User, Company, ChartOfAccount, JournalEntry],
+  entities: [User, Company, ChartOfAccount, JournalEntry, GeneralJournal],
   migrations: [__dirname + '/migrations/**/*.ts'],
   seeds: [__dirname + '/seeders/**/*.ts'],
   factories: ['factories/**/*.ts'],

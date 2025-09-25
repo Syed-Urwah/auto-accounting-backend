@@ -1,4 +1,11 @@
+import { IsNotEmpty, IsString, IsNumber } from 'class-validator';
+
 export class CreateGeneralJournalDto {
-  text: string;
-  company_id: number;
+  @IsNotEmpty()
+  @IsString()
+  userEntry: string;
+
+  @IsNotEmpty()
+  @IsNumber()
+  companyId: number;
 }

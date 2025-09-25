@@ -6,9 +6,10 @@ import { JournalEntry } from 'src/accounting/entities/journal-entry.entity';
 import { ChartOfAccount } from 'src/accounting/entities/chart-of-account.entity';
 import { ConfigModule } from '@nestjs/config';
 import { Company } from 'src/company/entities/company.entity';
+import { GeneralJournal } from './entities/general-journal.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([JournalEntry, ChartOfAccount, Company]), ConfigModule],
+  imports: [TypeOrmModule.forFeature([JournalEntry, ChartOfAccount, Company, GeneralJournal]), ConfigModule],
   controllers: [GeneralJournalController],
   providers: [GeneralJournalService],
 })

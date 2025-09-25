@@ -1,8 +1,9 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
 import { ChartOfAccount } from './chart-of-account.entity';
 import { Company } from 'src/company/entities/company.entity';
+import { GeneralJournal } from '../general-journal/entities/general-journal.entity';
 
-@Entity()
+@Entity("journal_entry")
 export class JournalEntry {
   @PrimaryGeneratedColumn()
   id: number;
@@ -10,8 +11,11 @@ export class JournalEntry {
   @ManyToOne(() => Company)
   company: Company;
 
-  @Column()
-  transactionId: string;
+  @ManyToOne(() => GeneralJournal, (generalJournal) => generalJournal.journalEntries)
+  generalJournal: GeneralJournal;
+
+  @Column({ nullable: true })
+  generalJournalId: number;
 
   @Column({ type: 'date' })
   date: string;

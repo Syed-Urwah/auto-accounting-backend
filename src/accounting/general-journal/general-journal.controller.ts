@@ -11,7 +11,7 @@ export class GeneralJournalController {
     return this.generalJournalService.create(createGeneralJournalDto);
   }
 
-  @Get('/by-transaction')
+  @Get('/by-general-journal')
   getJournalEntriesByTransactionId(@Query('companyId') companyId: number) {
     return this.generalJournalService.getJournalEntriesByTransactionId(companyId);
   }
