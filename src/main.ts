@@ -11,7 +11,12 @@ async function bootstrap() {
   const dataSource = app.get(DataSource);
   addTransactionalDataSource(dataSource);
   app.setGlobalPrefix('api');
-  app.useGlobalPipes(new ValidationPipe());
+  app.useGlobalPipes(
+    new ValidationPipe({
+      transform: true,
+      transformOptions: { enableImplicitConversion: true },
+    }),
+  );
   app.enableCors({
     origin: 'http://localhost:3000',
   });
